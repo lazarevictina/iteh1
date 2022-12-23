@@ -11,7 +11,7 @@
             <a class="nav-link" href="index.php">Usluge</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="">Termini</a>
+            <a class="nav-link" href="termini.php">Termini</a>
         </li>
         </ul>
     </div>
