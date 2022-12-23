@@ -49,7 +49,7 @@
               </div>
             </fieldset>
             <div class="d-grid gap-2">
-              <a href='' id='sviTermini'><button class="btn btn-warning" style="background-color: #f3c9bc ;" type="button">Svi termini</button></a>
+              <a href='./terminiZaUslugu.php' id='sviTermini'><button class="btn btn-warning" style="background-color: #f3c9bc ;" type="button">Svi termini</button></a>
             </div>
           </form>
 
