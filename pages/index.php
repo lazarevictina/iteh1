@@ -146,6 +146,169 @@
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
     integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
     crossorigin="anonymous"></script>
+    <script>
+    let usluge = [];
+    let pruzaoci = [];
+    let trenutniId = -1;
+
+    $(document).ready(function () {
+
+        ucitajUsluge();
+        ucitajPruzaoce();
+
+      // Dugme za cuvanje izmena
+      $('#button_sacuvaj').click(function () {
+        if (trenutniId == -1) {
+          return;
+        }
+        const naziv = $('#naziv_usluge').val();
+        if(naziv === "") {
+            alert("Morate uneti naziv usluge!");
+            return false;
+        }
+        if(!/^([^0-9]*)$/.test(naziv)) {
+            alert("Naziv usluge ne sme sadržati cifre i specijalne karaktere!");
+            return false;
+        }
+        
+        const pruzalac = $('#pruzalac').val();
+        $.post('../uslugaHandlers/update.php', { id: trenutniId, naziv: naziv, pruzalac: pruzalac }, function (data) {
+          console.log(data);
+          if (data != 1) {
+            alert(data);
+            return;
+          }
+          ucitajUsluge();
+          trenutniId = -1;
+        })
+      })
+
+      // Dugme za brisanje
+      $('#button_delete').click(function () {
+        if (trenutniId == -1) {
+          return;
+        }
+        $.post('../uslugaHandlers/delete.php', { id: trenutniId }, function (data) {
+          if (data != 1) {
+            alert("Ne možete obrisati uslugu koja ima zakazane termine!");
+            return;
+          }
+          console.log({ trenutniId: trenutniId });
+          if (data == 1) {
+            console.log('filter')
+            usluge = usluge.filter(function (elem) { return elem.id != trenutniId });
+            iscrtajTabelu();
+          }
+
+          trenutniId = -1;
+        })
+      })
+      
+      // Dugme za dodavanje
+      $('#button_dodaj').click(function (e) {
+        const naziv = $('#naziv_usluge_dodaj').val();
+        if(naziv === "") {
+            alert("Morate uneti naziv usluge!");
+            return false;
+        }
+        if(!/^([^0-9]*)$/.test(naziv)) {
+            alert("Naziv usluge ne sme sadržati cifre i specijalne karaktere!");
+            return false;
+        }
+        if(usluge.find(x=>x.naziv.toUpperCase()==naziv.toUpperCase())){
+            alert("Usluga sa datim nazivom već postoji!");
+            return false;
+        }
+        else {
+            const pruzalac = $('#pruzalac_dodaj').val();
+            $.post('../uslugaHandlers/add.php', { naziv: naziv, pruzalac: pruzalac }, function (data) {
+            console.log(data);
+            if (data != 1) {
+            alert(data);
+            return;
+          }
+          ucitajUsluge();
+        })
+        }
+      })
+
+      // Modal za dodavanje
+      $('#exampleModal').on('show.bs.modal', function (e) {
+        $('#pruzalac_dodaj').html('');
+        for (let pruzalac of pruzaoci) {
+          $('#pruzalac_dodaj').append(`
+            <option value='${pruzalac.id}'>${pruzalac.imePrezime}</option>
+          `)
+        }
+      })
+
+      // Modal za izmenu
+      
+      $('#exampleModal2').on('show.bs.modal', function (e) {
+        const button = $(e.relatedTarget);
+        const id = button.data('id');
+        trenutniId = id;
+        
+        $('#pruzalac').html('');
+        for (let pruzalac of pruzaoci) {
+          $('#pruzalac').append(`
+            <option value='${pruzalac.id}'>${pruzalac.imePrezime}</option>
+          `)
+        }
+
+        const usluga = usluge.find(function (elem) {
+          return elem.id == id;
+        });
+        if (!usluga) {
+          return;
+        }
+        $('#sviTermini').attr('href', 'terminiZaUslugu.php?id=' + id)
+        $('#pruzalac').val(usluga.pruzalac);
+        $('#naziv_usluge').val(usluga.naziv);
+        $('#broj_termina').val(usluga.broj_termina);
+      })
+
+    })
+
+    // Definicije funkcija
+    function ucitajPruzaoce() {
+      $.getJSON('../pruzalacHandlers/getAll.php', function (data) {
+        if (!data.status) {
+          alert(data.greska);
+          return;
+        }
+        pruzaoci = data.pruzaoci;
+        console.log(pruzaoci);
+      })
+    }
+
+    function ucitajUsluge() {
+      $.getJSON('../uslugaHandlers/getAll.php', function (data) {
+        if (!data.status) {
+          alert(data.greska);
+          return;
+        }
+        console.log(data.usluge)
+        usluge = data.usluge;
+        iscrtajTabelu();
+      })
+    }
+
+    function iscrtajTabelu() {
+      $('#usluge').html('');
+      let index = 1;
+      for (let usluga of usluge) {
+        $('#usluge').append(`
+          <tr data-toggle="modal" data-target="#exampleModal2" data-backdrop="static" data-id=${usluga.id}  >
+              <th scope="row">${index++}</th>
+              <td>${usluga.naziv}</td>
+              <td>${usluga.pruzalac_imePrezime}</td>
+              <td>${usluga.broj_termina}</td>
+            </tr>
+          `)
+      }
+    }
+  </script>
   
 </body>
 

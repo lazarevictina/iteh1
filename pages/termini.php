@@ -69,7 +69,85 @@
       </div>
     </div>
   </div>
-  
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script>
+    let termini = [];
+    let terminiFiltrirano = [];
+
+    $(document).ready(function () {
+
+      $.getJSON('../terminHandlers/getAll.php', function (data) {
+        console.log(termini);
+        if (!data.status) {
+          alert(data.greska);
+          return;
+        }
+        termini = data.termini;
+
+        termini.sort(function (a, b) {
+          return a.datum.localeCompare(b.datum);
+
+        })
+        
+        napuniTabelu(termini);
+      });
+
+      $('#sortiraj').change(function () {
+        const option = $('#sortiraj').val();
+        if (option === 'asc') {
+          termini.sort(function (a, b) {
+            return a.datum.localeCompare(b.datum);
+
+          })
+        } else {
+          termini.sort(function (a, b) {
+            return b.datum.localeCompare(a.datum);
+          })
+        }
+
+        napuniTabelu(termini);
+      })
+    })
+
+    function funkcijaZaPretragu1() {
+      input = document.getElementById("datum");
+      filter = input.value;
+      terminiFiltrirano = termini;
+
+      if(filter != "") {
+        terminiFiltrirano = termini.filter((element) => element.datum == filter);
+      }
+      napuniTabelu(terminiFiltrirano);
+    }
+
+    function funkcijaZaPretragu2() {
+      input = document.getElementById("prostorija");
+      filter = input.value;
+      terminiFiltrirano = termini;
+
+      if(filter != "") {
+        terminiFiltrirano = termini.filter((element) => element.prostorija == filter);
+      }
+      napuniTabelu(terminiFiltrirano);
+    }
+
+
+    function napuniTabelu(niz) {
+      $('#termini').html('');
+      let i = 0;
+      for (let termin of niz) {
+        $('#termini').append(`
+            <tr>
+              <td>${++i}</td>
+              <td>${termin.usluga_naziv}</td>
+              <td>${termin.klijent}</td>
+              <td>${termin.datum}</td>
+              <td>${termin.prostorija}</td>
+            </tr>
+          `)
+      }
+    }
+  </script>
 </body>
 
 </html>

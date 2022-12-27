@@ -104,7 +104,130 @@
     </div>
 
   </div>
-  
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+    integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+    crossorigin="anonymous"></script>
+  <script>
+    let usluga = undefined;
+    let termini = [];
+    let trenutniTerminId = -1;
+
+    $(document).ready(function () {
+
+        const uslugaId = $('#uslugaId').val();
+        console.log(uslugaId);
+
+      $('#button_sacuvaj').click(function () {
+        const klijent = $('#klijent').val();
+        const datum = $('#datum').val();
+        const prostorija = $('#prostorija').val();
+        if(klijent == "" || datum == "" || prostorija == "") {
+          alert("Morate popuniti sva polja!");
+          return false;
+        }
+        if(!/^([^0-9]*)$/.test(klijent)) {
+            alert("Ime i prezime ne sme sadržati cifre i specijalne karaktere!");
+            return false;
+        }
+        if(!/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/.test(datum)) {
+            alert("Datum mora biti u formatu  YYYY-MM-DD!");
+            return false;
+        }
+        if(!/^[0-9]*$/.test(prostorija)) {
+            alert("Broj prostorije može sadržati samo cifre!");
+            return false;
+        }
+
+        if (trenutniTerminId == -1) {
+          $.post('../terminHandlers/add.php', { klijent: klijent, datum: datum, prostorija: prostorija, usluga: usluga.id }, function (data) {
+            vratiTermine();
+          })
+        } else {
+          $.post('../terminHandlers/update.php', { id: trenutniTerminId, klijent: klijent, datum: datum, 
+            prostorija: prostorija, usluga: usluga.id }, function (data) {
+            vratiTermine();
+          })
+        }
+
+      });
+
+      $('#button_delete').click(function () {
+        if (trenutniTerminId == -1) {
+          return;
+        }
+        $.post('../terminHandlers/delete.php', { id: trenutniTerminId }, function (data) {
+            vratiTermine();
+        })
+      })
+
+
+      $("#exampleModal").on('show.bs.modal', function (e) {
+        const tr = $(e.relatedTarget);
+        trenutniTerminId = tr.data('id');
+        console.log(trenutniTerminId);
+        if (trenutniTerminId == -1) {
+          $('#naslovModala').html('Dodavanje novog termina');
+          $('#button_delete').attr('hidden', true);
+          $('#klijent').val('');
+          $('#datum').val('');
+          $('#prostorija').val('');
+        } else {
+          const termin = termini.find(function (element) { return element.id == trenutniTerminId });
+          $('#naslovModala').html('Izmena termina');
+          $('#button_delete').attr('hidden', false);
+          $('#klijent').val(termin.klijent);
+          $('#datum').val(termin.datum);
+          $('#prostorija').val(termin.prostorija);
+        }
+      })
+
+      $.getJSON('../uslugaHandlers/getById.php', { id: uslugaId }, function (data) {
+        console.log(data);
+        if (data.status != 1) {
+          alert(data.greska);
+          // window.location.replace('./');
+          return;
+        }
+        usluga = data.usluga;
+        console.log(usluga);
+        $('#usluga_naziv').html('Usluga: ' + usluga.naziv);
+        vratiTermine();
+      })
+    })
+
+
+    function vratiTermine() {
+      $.getJSON('../terminHandlers/getAllByUsluga.php', { id: usluga.id }, function (data) {
+        if (data.status != 1) {
+          alert(data.greska);
+          // window.location.replace('./');
+          return;
+        }
+        termini = data.termini;
+        termini.sort(function (a, b) {
+          return a.datum.localeCompare(b.datum);
+
+        })
+        napuniTabelu();
+      })
+    }
+
+    function napuniTabelu() {
+      $('#termini').html('');
+      let i = 0;
+      for (let termin of termini) {
+        $('#termini').append(`
+            <tr data-toggle='modal' data-target='#exampleModal' data-backdrop="static" data-id=${termin.id} >
+              <td>${++i}</td>
+              <td>${termin.klijent}</td>
+              <td>${termin.datum}</td>
+              <td>${termin.prostorija}</td>
+            </tr>
+          `)
+      }
+    }
+  </script>
 
 </body>
 
